@@ -47,12 +47,15 @@ const login = asyncHandler(async (req, res) => {
   }
 
   const user = await User.findOne({ name: username });
+  console.log("Username from request:", username);
+  console.log("User found:", user);
 
   if (!user) {
     return errorResponse(res, 'Unauthorized', null, 401);
   }
 
   const passwordCorrect = await bcrypt.compare(password, user.password);
+  console.log("Password match:", passwordCorrect);
 
   if (!passwordCorrect) {
     return errorResponse(res, 'Unauthorized', null, 401);
@@ -122,6 +125,20 @@ const refresh = asyncHandler(async (req, res) => {
         { expiresIn: '1h' }
       );
 
+      const refreshToken = jwt.sign(
+        { username },
+        process.env.REFRESH_TOKEN_SECRET,
+        { expiresIn: '3d' }
+      );
+
+      res.cookie('jwt', refreshToken, {
+       httpOnly: true,
+       secure: true,
+       signed: true,
+       sameSite: 'None',
+       maxAge: 3 * 24 * 60 * 60 * 1000
+      });
+
       return successResponse(
         res,
         'Access token refreshed',
@@ -142,9 +159,9 @@ const logout = asyncHandler(async (req, res) => {
 
   res.clearCookie('jwt', {
     httpOnly: true,
-    secure: true,
+    secure: false,
     signed: true,
-    sameSite: 'None'
+    sameSite: 'Lax'
   });
 
   return successResponse(
