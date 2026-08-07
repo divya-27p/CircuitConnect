@@ -46,7 +46,7 @@ const login = asyncHandler(async (req, res) => {
     return errorResponse(res, 'Validation failed', errors.array(), 400);
   }
 
-  const user = await User.findOne({ name: username });
+  const user = await User.findOne({ name: username }).select("+password");
   console.log("Username from request:", username);
   console.log("User found:", user);
 
